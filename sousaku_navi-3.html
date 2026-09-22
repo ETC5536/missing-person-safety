@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🔎 捜索ナビ</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#657089;--line:#dce3ee;--accent:#1769e0;--danger:#c62828;--ok:#16834b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,#1769e0,#0d47a1);color:#fff;padding:26px 16px}
+header h1{margin:0 0 6px;font-size:28px}header p{margin:0;opacity:.92}
+main{max-width:1050px;margin:auto;padding:18px}
+.notice{background:#fff3cd;border:1px solid #f0d36a;border-radius:14px;padding:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 18px #1b31520d}
+.card h2{margin:0 0 14px;font-size:20px}.full{grid-column:1/-1}
+label{display:block;font-weight:700;margin:10px 0 6px}input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;background:#fff}textarea{min-height:90px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+button{border:0;border-radius:10px;padding:11px 14px;font:inherit;font-weight:700;cursor:pointer;background:#e7edf7;color:#172033}
+button.primary{background:var(--accent);color:#fff}button.danger{background:#fee2e2;color:#a21c1c}
+.progress{height:14px;background:#e5eaf2;border-radius:99px;overflow:hidden}.bar{height:100%;width:0;background:#16834b;transition:.25s}
+.person-preview{display:grid;grid-template-columns:150px 1fr;gap:16px}.photo{width:150px;height:190px;border:2px dashed #cbd5e1;border-radius:12px;display:grid;place-items:center;overflow:hidden;background:#f8fafc;color:var(--muted);text-align:center}.photo img{width:100%;height:100%;object-fit:cover}
+.collab{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:8px;align-items:center;border-top:1px solid var(--line);padding:10px 0}.badge{padding:5px 8px;border-radius:999px;background:#e8eef9;font-size:13px;font-weight:700;text-align:center}.status-search{background:#dff7e9;color:#10653a}.status-wait{background:#fff3cd;color:#7a5b00}.status-done{background:#e9ecef;color:#596273}
+.ai{background:#eef6ff;border:1px solid #cfe2ff;border-radius:12px;padding:13px;white-space:pre-wrap;line-height:1.6}
+.poster-wrap{background:#eef1f5;padding:14px;border-radius:12px}.poster{background:#fff;color:#111;padding:22px;margin:auto;max-width:700px;border:1px solid #ddd}.poster h1{font-size:30px;margin:0 0 12px;text-align:center}.poster-photo{max-height:260px;max-width:100%;display:block;margin:10px auto;object-fit:contain}.poster .important{font-size:20px;font-weight:800}.poster .small{font-size:13px;color:#555}
+footer{max-width:1050px;margin:auto;padding:20px 18px 40px;color:var(--muted);font-size:13px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.row,.person-preview{grid-template-columns:1fr}.photo{width:120px;height:150px}.collab{grid-template-columns:1fr 1fr}.collab button{grid-column:1/-1}}
+@media print{body{background:#fff}.no-print,header,footer,.notice,.controls{display:none!important}.poster-wrap{padding:0;background:#fff}.poster{border:0;max-width:none;min-height:90vh;box-shadow:none}.poster h1{font-size:34px}}
+</style>
+</head>
+<body>
+<header>
+<h1>🔎 捜索ナビ</h1>
+<p>行方不明・迷子の情報整理、協力者管理、掲示用ポスター作成をまとめて行うページ</p>
+</header>
+<main>
+<div class="notice">
+<strong>⚠️ 安全について</strong><br>
+緊急性がある場合は110番など公的機関へ連絡してください。このページは情報整理を補助するもので、警察・保護者・施設などの指示に代わるものではありません。危険な場所へ一人で行かず、安全な大人と公的機関の指示を優先してください。
+</div>
+
+<div class="grid">
+<section class="card">
+<h2>👤 対象者情報</h2>
+<label>名前・呼び名</label><input id="name" placeholder="例：山田 太郎">
+<div class="row">
+<div><label>年齢</label><input id="age" type="number" min="0" max="120"></div>
+<div><label>最後に確認した日時</label><input id="lastTime" type="datetime-local"></div>
+</div>
+<label>最後に確認した場所</label><input id="lastPlace" placeholder="例：○○駅付近">
+<label>服装・特徴・持ち物</label><textarea id="features" placeholder="分かっている事実だけを記入"></textarea>
+<label>公開用の連絡先</label><input id="contact" placeholder="警察・施設・保護者などの公開してよい連絡先">
+<label>写真</label><input id="photo" type="file" accept="image/*">
+<div class="actions"><button class="primary" onclick="savePerson()">💾 保存</button><button onclick="clearPerson()">🧹 入力を消去</button></div>
+</section>
+
+<section class="card">
+<h2>👥 捜索協力者</h2>
+<p>誰が協力中なのか、担当区域や状態を一覧で確認できます。</p>
+<div class="row">
+<div><label>名前・呼び名</label><input id="cName" placeholder="例：佐藤さん"></div>
+<div><label>担当区域</label><input id="cArea" placeholder="例：駅周辺"></div>
+</div>
+<label>状態</label>
+<select id="cStatus"><option value="search">🔎 捜索中</option><option value="wait">⏸️ 待機</option><option value="done">✅ 終了</option></select>
+<div class="actions"><button class="primary" onclick="addCollaborator()">＋ 協力者を追加</button></div>
+<div id="collabList"></div>
+</section>
+
+<section class="card full">
+<h2>📊 捜索状況</h2>
+<label>全体の進捗（目安）</label>
+<input id="progressInput" type="range" min="0" max="100" value="0" oninput="updateProgress()">
+<div class="progress"><div id="progressBar" class="bar"></div></div>
+<p id="progressText">0%</p>
+</section>
+
+<section class="card">
+<h2>🤖 AI情報整理</h2>
+<p>入力済みの情報を、捜索本部で確認しやすい文章に整理します。現在は外部AIへ個人情報を送信しないローカル整理機能です。</p>
+<div class="actions"><button class="primary" onclick="organizeInfo()">✨ 情報を整理</button></div>
+<div id="aiResult" class="ai">まだ整理していません。</div>
+</section>
+
+<section class="card">
+<h2>🖨️ 印刷・掲示物</h2>
+<label>用紙サイズ</label>
+<select id="paper">
+<option>A4</option><option>A3</option><option>A2</option><option>A1</option><option>B5</option><option>B4</option><option>はがき</option><option>カスタム</option>
+</select>
+<label>用途・用紙</label>
+<select id="paperUse">
+<option>屋内・普通紙</option><option>厚紙</option><option>屋外・耐水紙</option><option>ラミネート</option><option>シール用紙</option>
+</select>
+<div class="actions"><button class="primary" onclick="makePoster()">🪧 ポスターを更新</button><button onclick="window.print()">🖨️ 印刷</button></div>
+<p class="small">印刷時はポスター部分だけを印刷します。実際の用紙サイズはプリンター側でも確認してください。</p>
+</section>
+
+<section class="card full controls">
+<h2>🛡️ 公開前チェック</h2>
+<ul>
+<li>公開ポスターには必要最小限の情報だけを載せる</li>
+<li>住所・学校名などの個人情報を不用意に公開しない</li>
+<li>連絡先は公開してよい公的・保護者等の窓口を使う</li>
+<li>GitHub Pagesはインターネット上で公開されるため、機密情報をリポジトリへ保存しない</li>
+</ul>
+</section>
+
+<section class="card full">
+<h2>🪧 ポスター プレビュー</h2>
+<div class="poster-wrap">
+<div id="poster" class="poster">
+<h1>🔎 捜索協力のお願い</h1>
+<div id="posterContent">対象者情報を入力するとここに表示されます。</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<footer>捜索ナビ — 情報整理を補助する静的Webページ。緊急時は公的機関へ。</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+let photoData="";
+let collaborators=JSON.parse(localStorage.getItem("sousaku_collaborators")||"[]");
+
+function savePerson(){
+ const data={name:$("name").value,age:$("age").value,lastTime:$("lastTime").value,lastPlace:$("lastPlace").value,features:$("features").value,contact:$("contact").value,photo:photoData};
+ localStorage.setItem("sousaku_person",JSON.stringify(data));
+ makePoster(); alert("保存しました。");
+}
+function loadPerson(){
+ const d=JSON.parse(localStorage.getItem("sousaku_person")||"null"); if(!d)return;
+ ["name","age","lastTime","lastPlace","features","contact"].forEach(k=>$(k).value=d[k]||"");
+ photoData=d.photo||""; makePoster();
+}
+function clearPerson(){
+ ["name","age","lastTime","lastPlace","features","contact"].forEach(k=>$(k).value="");
+ photoData=""; $("photo").value=""; makePoster();
+}
+$("photo").addEventListener("change",e=>{
+ const f=e.target.files[0]; if(!f)return;
+ const r=new FileReader(); r.onload=()=>{photoData=r.result;makePoster()}; r.readAsDataURL(f);
+});
+function addCollaborator(){
+ const name=$("cName").value.trim(); if(!name){alert("名前・呼び名を入力してください。");return}
+ collaborators.push({name,area:$("cArea").value.trim(),status:$("cStatus").value});
+ localStorage.setItem("sousaku_collaborators",JSON.stringify(collaborators));
+ $("cName").value="";$("cArea").value="";renderCollaborators();
+}
+function removeCollaborator(i){collaborators.splice(i,1);localStorage.setItem("sousaku_collaborators",JSON.stringify(collaborators));renderCollaborators()}
+function renderCollaborators(){
+ const labels={search:"🔎 捜索中",wait:"⏸️ 待機",done:"✅ 終了"};
+ $("collabList").innerHTML=collaborators.length?collaborators.map((c,i)=>`
+ <div class="collab"><strong>${esc(c.name)}</strong><span>${esc(c.area||"担当未設定")}</span><span class="badge status-${c.status}">${labels[c.status]}</span><button class="danger" onclick="removeCollaborator(${i})">削除</button></div>`).join(""):"<p>まだ協力者が登録されていません。</p>";
+}
+function updateProgress(){const v=$("progressInput").value;$("progressBar").style.width=v+"%";$("progressText").textContent=v+"%"}
+function organizeInfo(){
+ const name=$("name").value||"対象者"; const time=$("lastTime").value||"未入力"; const place=$("lastPlace").value||"未入力";
+ const active=collaborators.filter(c=>c.status==="search").length;
+ $("aiResult").textContent=`【情報整理】\n対象：${name}\n最後に確認：${time}\n最後に確認した場所：${place}\n現在の協力者：${collaborators.length}人（捜索中 ${active}人）\n\n次に確認するとよい項目：\n・最後に確認された時刻と場所の記録を統一\n・協力者の担当区域を重複なく記録\n・新しい情報は時刻と場所を付けて記録\n・緊急情報は警察・保護者・施設など公的な窓口へ共有`;
+}
+function makePoster(){
+ const d={name:$("name").value,age:$("age").value,lastTime:$("lastTime").value,lastPlace:$("lastPlace").value,features:$("features").value,contact:$("contact").value};
+ let h=photoData?`<img class="poster-photo" src="${photoData}" alt="写真">`:"";
+ h+=`<p class="important">名前：${esc(d.name||"未入力")}</p>`;
+ if(d.age)h+=`<p class="important">年齢：${esc(d.age)}歳</p>`;
+ h+=`<p>最後に確認：${esc(d.lastTime||"未入力")}</p><p>場所：${esc(d.lastPlace||"未入力")}</p>`;
+ if(d.features)h+=`<p><strong>特徴・服装：</strong><br>${esc(d.features).replace(/\n/g,"<br>")}</p>`;
+ if(d.contact)h+=`<p class="important">連絡先：${esc(d.contact)}</p>`;
+ h+=`<p class="small">※公開する情報は、本人・保護者・警察等が公開してよいと確認した内容にしてください。</p>`;
+ $("posterContent").innerHTML=h;
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+loadPerson();renderCollaborators();updateProgress();makePoster();
+</script>
+</body>
+</html>
