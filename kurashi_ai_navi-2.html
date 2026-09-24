@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>くらしAIナビ｜生活・防災・困りごとをAIでサポート</title>
+<meta name="description" content="くらしAIナビは、AI相談、メモ、タスク、予定、緊急時サポートをまとめた無料の生活支援Webアプリです。">
+<meta name="robots" content="index,follow">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"くらしAIナビ","applicationCategory":"UtilitiesApplication","operatingSystem":"Android, iOS, Web","description":"AI相談、メモ、タスク、予定、緊急時サポートをまとめた生活支援Webアプリ。","offers":{"@type":"Offer","price":0,"priceCurrency":"JPY"}}
+</script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#182235;--muted:#667085;--line:#dce4ef;--blue:#2563eb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
+header{padding:25px 16px;color:#fff;background:linear-gradient(135deg,#2563eb,#4f46e5)}header h1{margin:0;font-size:29px}header p{margin:6px 0 0}
+main{max-width:980px;margin:auto;padding:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 5px 20px #22334a12}
+h2{margin:0 0 12px;font-size:19px}.sub{font-size:13px;color:var(--muted)}
+textarea,input{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:11px;font:inherit;background:#fff}textarea{min-height:100px}
+button{border:0;border-radius:11px;padding:10px 13px;font:inherit;font-weight:700;cursor:pointer;background:#e8edf5}.primary{background:var(--blue);color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.result{white-space:pre-wrap;line-height:1.6;background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:10px}
+.emergency{display:grid;grid-template-columns:1fr 1fr;gap:9px}.emergency a{padding:14px;text-align:center;color:white;text-decoration:none;border-radius:11px;font-weight:800;font-size:20px;background:#c62828}
+.task{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding:9px 0}.task span{flex:1}.done{text-decoration:line-through;color:#8993a5}
+.note{background:#eef6ff;border-radius:10px;padding:10px;margin-top:7px;white-space:pre-wrap}.small{font-size:12px;color:var(--muted)}
+body.dark{--bg:#101522;--card:#182131;--text:#f1f5f9;--muted:#aeb8c8;--line:#303b4f}body.dark input,body.dark textarea{background:#101722;color:#fff}body.dark .result{background:#111a28}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><h1>🤖 くらしAIナビ</h1><p>生活・防災・困りごとをAIと便利な機能でサポート</p></header>
+<main><div class="grid">
+<section class="card full"><h2>⚡ クイックメニュー</h2>
+<div class="actions"><button onclick="go('ai')">🤖 AI相談</button><button onclick="go('task')">✅ タスク</button><button onclick="go('memo')">📝 メモ</button><button onclick="go('schedule')">📅 予定</button></div></section>
+
+<section class="card" id="ai"><h2>🤖 AI相談・情報整理</h2><p class="sub">現在は外部AIへ入力内容を送らないローカル整理版です。</p>
+<textarea id="aiIn" placeholder="例：やることが多くて整理できない"></textarea><div class="actions"><button class="primary" onclick="ai()">✨ 整理する</button></div><div id="aiOut" class="result">ここに整理結果が表示されます。</div></section>
+
+<section class="card"><h2>🚨 緊急時サポート</h2><p class="sub">緊急時は公的機関へ。危険な場所へ一人で行かず、安全な大人の指示を優先してください。</p>
+<div class="emergency"><a href="tel:110">📞 110</a><a href="tel:119">📞 119</a></div>
+<div class="actions"><a href="https://www.jma.go.jp/" target="_blank" rel="noopener"><button>🌦️ 気象庁</button></a><a href="https://www.fdma.go.jp/" target="_blank" rel="noopener"><button>🧯 消防庁</button></a></div></section>
+
+<section class="card" id="task"><h2>✅ やることリスト</h2><div class="actions"><input id="taskIn" placeholder="やること"><button class="primary" onclick="addTask()">＋</button></div><div id="taskList"></div></section>
+
+<section class="card" id="schedule"><h2>📅 今日の予定</h2><div class="actions"><input id="scheduleIn" placeholder="例：16:00 宿題"><button class="primary" onclick="addSchedule()">保存</button></div><div id="scheduleList"></div></section>
+
+<section class="card" id="memo"><h2>📝 メモ</h2><textarea id="memoIn" placeholder="自由にメモ"></textarea><div class="actions"><button class="primary" onclick="saveMemo()">💾 保存</button></div><div id="memoList"></div></section>
+
+<section class="card"><h2>⚙️ 設定</h2><div class="actions"><button onclick="dark()">🌙 ダークモード</button><button onclick="resetData()">🧹 保存データを消去</button></div><p class="small">個人情報や秘密情報は公開ページに入力しないでください。</p></section>
+</div></main>
+<script>
+const $=x=>document.getElementById(x);
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function go(id){$(id).scrollIntoView({behavior:"smooth"});}
+function ai(){let t=$("aiIn").value.trim();$("aiOut").textContent=t?`【情報整理】\n\n${t}\n\n・まず重要なことを1つ決める\n・今日することと後ですることを分ける\n・分からないことは信頼できる大人や公式情報で確認する\n・緊急の場合は公的機関へ相談する\n\n※外部AIには送信していません。`:"相談内容を入力してください。";}
+let tasks=JSON.parse(localStorage.getItem("kai_tasks")||"[]");
+function saveTasks(){localStorage.setItem("kai_tasks",JSON.stringify(tasks));renderTasks();}
+function addTask(){let v=$("taskIn").value.trim();if(!v)return;tasks.push({t:v,d:false});$("taskIn").value="";saveTasks();}
+function renderTasks(){$("taskList").innerHTML=tasks.map((x,i)=>`<div class="task"><input type="checkbox" ${x.d?"checked":""} onchange="tasks[${i}].d=this.checked;saveTasks()"><span class="${x.d?"done":""}">${esc(x.t)}</span><button onclick="tasks.splice(${i},1);saveTasks()">削除</button></div>`).join("")||'<p class="small">まだありません。</p>';}
+let schedules=JSON.parse(localStorage.getItem("kai_schedule")||"[]");
+function addSchedule(){let v=$("scheduleIn").value.trim();if(!v)return;schedules.push(v);localStorage.setItem("kai_schedule",JSON.stringify(schedules));$("scheduleIn").value="";renderSchedule();}
+function renderSchedule(){$("scheduleList").innerHTML=schedules.map((x,i)=>`<div class="note">${esc(x)} <button onclick="schedules.splice(${i},1);localStorage.setItem('kai_schedule',JSON.stringify(schedules));renderSchedule()">削除</button></div>`).join("")||'<p class="small">予定はありません。</p>';}
+let memos=JSON.parse(localStorage.getItem("kai_memos")||"[]");
+function saveMemo(){let v=$("memoIn").value.trim();if(!v)return;memos.unshift(v);localStorage.setItem("kai_memos",JSON.stringify(memos));$("memoIn").value="";renderMemos();}
+function renderMemos(){$("memoList").innerHTML=memos.map((x,i)=>`<div class="note">${esc(x)} <button onclick="memos.splice(${i},1);localStorage.setItem('kai_memos',JSON.stringify(memos));renderMemos()">削除</button></div>`).join("")||'<p class="small">メモはありません。</p>';}
+function dark(){document.body.classList.toggle("dark");localStorage.setItem("kai_dark",document.body.classList.contains("dark"));}
+function resetData(){if(!confirm("保存データを消去しますか？"))return;["kai_tasks","kai_schedule","kai_memos"].forEach(x=>localStorage.removeItem(x));tasks=[];schedules=[];memos=[];renderTasks();renderSchedule();renderMemos();}
+if(localStorage.getItem("kai_dark")==="true")document.body.classList.add("dark");
+renderTasks();renderSchedule();renderMemos();
+</script></body></html>
